@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"mapreduce"
 	"os"
+	"unicode"
+	"strings"
+	"strconv"
 )
 
 //
@@ -15,6 +18,22 @@ import (
 //
 func mapF(filename string, contents string) []mapreduce.KeyValue {
 	// Your code here (Part II).
+	f := func(c rune) bool {
+		return !unicode.IsLetter(c)
+	}
+	slice :=  strings.FieldsFunc(contents,f)
+	keyCountMap := make(map[string]int)
+	for _, k := range slice {
+		keyCountMap[k]++
+	}
+	var result []mapreduce.KeyValue
+	for k,c := range keyCountMap {
+		var tmp mapreduce.KeyValue
+		tmp.Key = k
+		tmp.Value = strconv.Itoa(c)
+		result = append(result,tmp)
+	}
+	return result
 }
 
 //
@@ -24,8 +43,17 @@ func mapF(filename string, contents string) []mapreduce.KeyValue {
 //
 func reduceF(key string, values []string) string {
 	// Your code here (Part II).
+	var count = resultMap[key]
+	for _, v := range values {
+		get,err := strconv.Atoi(v)
+		if err == nil {
+			count += get
+		}
+	}
+	resultMap[key] = count
+	return strconv.Itoa(count)
 }
-
+var resultMap = make(map[string]int)
 // Can be run in 3 ways:
 // 1) Sequential (e.g., go run wc.go master sequential x1.txt .. xN.txt)
 // 2) Master (e.g., go run wc.go master localhost:7777 x1.txt .. xN.txt)
